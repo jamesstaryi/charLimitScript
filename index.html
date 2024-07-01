@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel Validator</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>Upload Excel File</h1>
+    <form action="/upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept=".xlsx,.xls" required>
+        <label for="char_limit">Character Limit:</label>
+        <input type="number" name="char_limit" id="char_limit" required>
+        <button type="submit">Upload</button>
+    </form>
+    <div id="results">
+        <!-- Results will be inserted here -->
+    </div>
+    <script>
+        // JavaScript to handle form submission and display results
+        document.querySelector('form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(this);
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultsDiv = document.getElementById('results');
+                resultsDiv.innerHTML = '<h2>Cells Exceeding Character Limit</h2>';
+                const ul = document.createElement('ul');
+                data.results.forEach(result => {
+                    const li = document.createElement('li');
+                    li.textContent = `Row ${result.row}: ${result.cell}`;
+                    ul.appendChild(li);
+                });
+                resultsDiv.appendChild(ul);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>

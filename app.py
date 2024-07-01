@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, send_from_directory, jsonify
 import pandas as pd
 import os
 
@@ -18,27 +18,27 @@ def find_long_cells(file_path, char_limit):
         for row_idx, row in sheet.iterrows():
             for cell in row:
                 if isinstance(cell, str) and len(cell) > char_limit:
-                    long_cells.append((row_idx + 1, cell))  # Store row number and cell content
+                    long_cells.append({"row": row_idx + 1, "cell": cell})  # Store row number and cell content
     
     return long_cells
 
-@app.route('/', methods=['GET'])
+@app.route('/')
 def index():
-    return render_template('index.html')
+    return send_from_directory('.', 'index.html')
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files or 'char_limit' not in request.form:
-        return 'No file part or character limit provided'
+        return jsonify({'error': 'No file part or character limit provided'}), 400
     file = request.files['file']
     char_limit = int(request.form['char_limit'])
     if file.filename == '':
-        return 'No selected file'
+        return jsonify({'error': 'No selected file'}), 400
     if file:
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
         file.save(file_path)
         results = find_long_cells(file_path, char_limit)
-        return render_template('index.html', results=results)
+        return jsonify({'results': results})
 
 if __name__ == '__main__':
     app.run(debug=True)
